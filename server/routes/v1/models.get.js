@@ -7,23 +7,23 @@ export default defineEventHandler(async (event) => {
     const authHeader = getHeader(event, 'authorization')
     const apiKey = extractApiKey(authHeader)
 
-    // if (!apiKey) {
-    //   throw createError({
-    //     statusCode: 401,
-    //     statusMessage: 'Unauthorized',
-    //     message: 'Missing API key'
-    //   })
-    // }
+    if (!apiKey) {
+      throw createError({
+        statusCode: 401,
+        statusMessage: 'Unauthorized',
+        message: 'Missing API key'
+      })
+    }
 
-    // // 检查API Key是否有效
-    // const keyRecord = await dbOperations.findOne(keysDb, { key: apiKey })
-    // if (!keyRecord) {
-    //   throw createError({
-    //     statusCode: 401,
-    //     statusMessage: 'Unauthorized',
-    //     message: 'Invalid API key'
-    //   })
-    // }
+    // 检查API Key是否有效
+    const keyRecord = await dbOperations.findOne(keysDb, { key: apiKey })
+    if (!keyRecord) {
+      throw createError({
+        statusCode: 401,
+        statusMessage: 'Unauthorized',
+        message: 'Invalid API key'
+      })
+    }
 
     // 获取所有启用的Hook作为模型
     const hooks = await dbOperations.find(hooksDb, { enabled: true })
