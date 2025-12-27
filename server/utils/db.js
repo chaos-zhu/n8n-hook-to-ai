@@ -1,17 +1,30 @@
 import Datastore from '@seald-io/nedb'
 import { fileURLToPath } from 'url'
-import { dirname, join } from 'path'
+import { dirname, join, resolve } from 'path'
 import { existsSync, mkdirSync } from 'fs'
 
 // 获取数据目录路径
+// 在生产环境中使用 /app/data，在开发环境中使用相对路径
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
-const dataDir = join(__dirname, '../../data')
+
+// 优先使用环境变量，其次检查 /app/data（Docker 环境），最后使用相对路径
+let dataDir
+if (process.env.DATA_DIR) {
+  dataDir = resolve(process.env.DATA_DIR)
+} else if (process.env.NODE_ENV === 'production' && existsSync('/app')) {
+  dataDir = '/app/data'
+} else {
+  dataDir = join(__dirname, '../../data')
+}
 
 // 确保数据目录存在
 if (!existsSync(dataDir)) {
   mkdirSync(dataDir, { recursive: true })
 }
+
+// 输出数据目录路径用于调试
+console.log('[DB] Data directory:', dataDir)
 
 // 创建数据库实例
 const createDatabase = (filename) => {

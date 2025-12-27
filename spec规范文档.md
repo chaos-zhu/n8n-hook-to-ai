@@ -1095,8 +1095,8 @@ fetch("https://8.555222.best/webhook/edca0f0a-77c3-43e5-8ece-e514a29446f5/chat",
 ### OpenAI兼容API
 | 方法 | 路径 | 说明 | 认证 |
 |------|------|------|------|
-| GET | /api/v1/models | 获取模型列表 | API Key |
-| POST | /api/v1/chat/completions | 对话补全 | API Key |
+| GET | /v1/models | 获取模型列表 | API Key |
+| POST | /v1/chat/completions | 对话补全 | API Key |
 
 ## 依赖包
 

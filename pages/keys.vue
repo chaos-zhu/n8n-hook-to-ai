@@ -33,7 +33,18 @@
                 <span class="text-sm font-medium text-gray-900 dark:text-white">{{ key.name || '未命名' }}</span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
-                <code class="text-sm bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-gray-700 dark:text-gray-300">{{ key.key }}</code>
+                <div class="flex items-center gap-2">
+                  <code class="text-sm bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-gray-700 dark:text-gray-300">{{ key.key }}</code>
+                  <button
+                    @click="copyKey(key.key)"
+                    class="p-1 text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                    title="复制"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  </button>
+                </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                 {{ formatDate(key.createdAt) }}
@@ -81,7 +92,7 @@
         </div>
         <p>示例请求：</p>
         <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 overflow-x-auto">
-          <pre class="text-gray-700 dark:text-gray-300 text-xs">curl {{ baseUrl }}/api/v1/chat/completions \
+          <pre class="text-gray-700 dark:text-gray-300 text-xs">curl {{ baseUrl }}/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer sk-xxxxxxxxxxxxxxxx" \
   -d '{
@@ -239,12 +250,15 @@ const createKey = async () => {
       showModal.value = false
       showNewKeyModal.value = true
 
-      // 自动复制到剪贴板
+      // 自动复制到剪贴板并关闭弹窗
       try {
         await navigator.clipboard.writeText(res.data.fullKey)
         toast.success('API Key 已复制到剪贴板')
+        // 复制成功后自动关闭弹窗
+        showNewKeyModal.value = false
+        newKey.value = ''
       } catch (e) {
-        // 剪贴板复制失败，用户需要手动复制
+        // 剪贴板复制失败，用户需要手动复制，保持弹窗打开
       }
 
       loadKeys()
@@ -261,8 +275,21 @@ const copyNewKey = async () => {
   try {
     await navigator.clipboard.writeText(newKey.value)
     toast.success('已复制到剪贴板')
+    // 复制成功后自动关闭弹窗
+    showNewKeyModal.value = false
+    newKey.value = ''
   } catch (error) {
     toast.error('复制失败，请手动复制')
+  }
+}
+
+// 复制列表中的Key
+const copyKey = async (key) => {
+  try {
+    await navigator.clipboard.writeText(key)
+    toast.success('已复制到剪贴板')
+  } catch (error) {
+    toast.error('复制失败')
   }
 }
 

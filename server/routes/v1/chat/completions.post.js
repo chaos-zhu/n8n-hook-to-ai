@@ -48,7 +48,7 @@ export default defineEventHandler(async (event) => {
 
     // 解析请求体
     const body = await readBody(event)
-    const { model, messages, stream = false } = body
+    const { model, messages, stream = false, session_id } = body
 
     if (!model) {
       throw createError({
@@ -84,14 +84,43 @@ export default defineEventHandler(async (event) => {
 
     logData.hookId = hook._id
 
-    // 生成会话ID
-    const sessionId = generateSessionId()
+    // 使用客户端传入的 session_id，如果没有则生成新的
+    // 这样可以支持连续对话，客户端需要在后续请求中传入相同的 session_id
+    const sessionId = session_id || generateSessionId()
+
+    // 构建 chatInput：如果是连续对话，只发送最后一条用户消息
+    // 如果是新对话且有多条消息，需要构建完整的对话历史
+    let chatInput = ''
+    if (session_id) {
+      // 连续对话模式：只发送最后一条用户消息
+      chatInput = lastUserMessage ? lastUserMessage.content : ''
+    } else {
+      // 新对话模式：如果有多条消息，构建对话历史
+      if (messages.length > 1) {
+        // 构建对话历史格式，让 n8n 能理解上下文
+        const historyMessages = messages.slice(0, -1)
+        const currentMessage = lastUserMessage ? lastUserMessage.content : ''
+
+        // 如果有历史消息，将其格式化为上下文
+        if (historyMessages.length > 0) {
+          const history = historyMessages.map(m => {
+            const role = m.role === 'user' ? '用户' : (m.role === 'assistant' ? '助手' : m.role)
+            return `${role}: ${m.content}`
+          }).join('\n')
+          chatInput = `[对话历史]\n${history}\n\n[当前问题]\n${currentMessage}`
+        } else {
+          chatInput = currentMessage
+        }
+      } else {
+        chatInput = lastUserMessage ? lastUserMessage.content : ''
+      }
+    }
 
     // 构建n8n请求
     const n8nPayload = {
       action: 'sendMessage',
       sessionId: sessionId,
-      chatInput: lastUserMessage ? lastUserMessage.content : ''
+      chatInput: chatInput
     }
 
     // 调用n8n webhook
@@ -132,12 +161,13 @@ export default defineEventHandler(async (event) => {
               const { done, value } = await reader.read()
 
               if (done) {
-                // 发送结束标记
+                // 发送结束标记，包含 session_id 供客户端后续使用
                 const endChunk = {
                   id: responseId,
                   object: 'chat.completion.chunk',
                   created: created,
                   model: model,
+                  session_id: sessionId,
                   choices: [{
                     index: 0,
                     delta: {},
@@ -222,6 +252,7 @@ export default defineEventHandler(async (event) => {
         object: 'chat.completion',
         created: created,
         model: model,
+        session_id: sessionId,
         choices: [{
           index: 0,
           message: {
