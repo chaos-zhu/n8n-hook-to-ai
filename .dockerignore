@@ -1,0 +1,39 @@
+# 依赖目录
+node_modules
+
+# 构建输出
+.output
+.nuxt
+dist
+
+# 开发文件
+.git
+.gitignore
+.github
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# 日志
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 环境变量
+.env
+.env.*
+!.env.example
+
+# 测试
+coverage
+.nyc_output
+
+# 其他
+README.md
+*.md
+Dockerfile
+docker-compose*.yml

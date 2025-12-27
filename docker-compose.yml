@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  n8n-hook-to-ai-api:
+    image: ghcr.io/chaos-zhu/n8n-hook-to-ai:latest
+    container_name: n8n-hook-to-ai-api
+    restart: unless-stopped
+    ports:
+      - "3003:3000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - HOST=0.0.0.0
+      - PORT=3000
+      - NODE_ENV=production
