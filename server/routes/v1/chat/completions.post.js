@@ -116,6 +116,15 @@ export default defineEventHandler(async (event) => {
       }
     }
 
+    // 如果 chatInput 为空，直接返回空响应，不请求 n8n
+    if (!chatInput || !chatInput.trim()) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Bad Request',
+        message: 'Empty message content'
+      })
+    }
+
     // 构建n8n请求
     const n8nPayload = {
       action: 'sendMessage',
@@ -143,6 +152,10 @@ export default defineEventHandler(async (event) => {
       setHeader(event, 'Content-Type', 'text/event-stream')
       setHeader(event, 'Cache-Control', 'no-cache')
       setHeader(event, 'Connection', 'keep-alive')
+      // 关键：使用 chunked 编码，避免 Content-Length 不匹配导致的 TransferEncodingError
+      setHeader(event, 'Transfer-Encoding', 'chunked')
+      // 禁用代理缓冲（如 Nginx）
+      setHeader(event, 'X-Accel-Buffering', 'no')
 
       const responseId = `chatcmpl-${generateSessionId()}`
       const created = Math.floor(Date.now() / 1000)
